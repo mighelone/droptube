@@ -199,8 +199,8 @@ def diffusionFlux(Ptot, Pinf, Tinf, Tp, dp, Ps=0, Sh=2):
 
     Returns
     -------
-    float
-        Diffusion flux in kg/s-m2
+    tuple
+        (Diffusion flux in kg/s-m2, kdiff kg/s-m2..)
     '''
     Tm = 0.5 * (Tp + Tinf)
     diff = diffusivity(pressure=Ptot * atm, temperature=Tm)
