@@ -14,6 +14,18 @@ atm = 101325.
 
 sigma = 5.670373e-8
 
+M1 = 28.01
+TC1 = 126.2
+Vc1 = 89.49
+# q1=3.798
+M2 = 44.01
+TC2 = 304.1
+Vc2 = 94.04
+
+DT1 = (2.616e-4 * np.sqrt(1. / M1 + 1. / M2) /
+       pow(TC1 * TC2 / 10000., 0.1405) /
+       pow(pow(Vc1 / 100., 0.4) + pow(Vc2 / 100., 0.4), 2))
+
 
 def diffusivity(pressure, temperature):
     '''
@@ -33,19 +45,8 @@ def diffusivity(pressure, temperature):
     diffusivity: float
         diffusivity in m2/s
     '''
-    M1 = 28.01
-    TC1 = 126.2
-    Vc1 = 89.49
-    # q1=3.798
-    M2 = 44.01
-    TC2 = 304.1
-    Vc2 = 94.04
 
-    DT1 = (2.616e-4 * np.sqrt(1. / M1 + 1. / M2) *
-           pow(temperature / 273.15, 1.81) /
-           pow(TC1 * TC2 / 10000., 0.1405) /
-           pow(pow(Vc1 / 100., 0.4) + pow(Vc2 / 100., 0.4), 2))
-    return DT1 * (101325. / pressure)
+    return DT1 * pow(temperature / 273.15, 1.81) * (101325. / pressure)
 
 
 def trueDensity(ua, yash):
@@ -263,7 +264,17 @@ def chi_parameter(dp, Ptot, Pinf, Tinf, Tp, rhoc, Aint, Deff,
         rated *= 6. / rhoc / dp  # diffusion rate 1/s
         return ratek - rated
 
-    xs = brentq(f, a=0.0, b=Pinf / Ptot)
+    tol = 1e-6
+    if np.abs(f(0)) < tol:
+        xs = 0
+    elif np.abs(f(Pinf / Ptot)) < tol:
+        xs = Pinf / Ptot
+    else:
+        try:
+            xs = brentq(f, a=0.0, b=Pinf / Ptot)
+        except:
+            raise RuntimeError('Brentq does not work\nf(a)={}'
+                               '\nf(b)={}'.format(f(0), f(Pinf / Ptot)))
     Ps = xs * Ptot
     chi = 1 - np.log(1 + Ps / Ptot) / np.log(1 + Pinf / Ptot)
     # print f(xs)
